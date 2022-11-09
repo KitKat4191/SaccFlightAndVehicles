@@ -1,4 +1,4 @@
-﻿
+
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -77,7 +77,7 @@ namespace SaccFlightAndVehicles
             CenterOfMass = EntityControl.CenterOfMass;
             OutsideVehicleLayer = (int)SAVControl.GetProgramVariable("OutsideVehicleLayer");
             GunRecoil *= VehicleRigidbody.mass;
-            if (GunDamageParticle) GunDamageParticle.gameObject.SetActive(false);
+            GunDamageParticle.gameObject.SetActive(false);
 
             FindSelf();
 
@@ -110,7 +110,7 @@ namespace SaccFlightAndVehicles
         public void SFEXT_O_PilotEnter()
         {
             InVehicle = true;
-            if (GunDamageParticle) { GunDamageParticle.gameObject.SetActive(true); }
+            GunDamageParticle.gameObject.SetActive(true);
             gameObject.SetActive(true);
             RequestSerialization();
         }
@@ -130,7 +130,7 @@ namespace SaccFlightAndVehicles
             InVehicle = false;
             if (Selected) { SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, nameof(Set_Inactive)); }
             Selected = false;
-            if (GunDamageParticle) { GunDamageParticle.gameObject.SetActive(false); }
+            GunDamageParticle.gameObject.SetActive(false);
         }
         public void SFEXT_P_PassengerEnter()
         { InVehicle = true; }
@@ -273,7 +273,7 @@ namespace SaccFlightAndVehicles
                         NextTargetSAVControl = TargetCheckerParent.GetComponent<SaccAirVehicle>();
                     }
                     //if target EngineController is null then it's a dummy target (or hierarchy isn't set up properly)
-                    if ((!NextTargetSAVControl || (!NextTargetSAVControl.Taxiing && !NextTargetSAVControl.EntityControl._dead)))
+                    if ((!NextTargetSAVControl || (!NextTargetSAVControl.Taxiing && !NextTargetSAVControl.EntityControl.dead)))
                     {
                         RaycastHit hitnext;
                         //raycast to check if it's behind something
@@ -339,7 +339,7 @@ namespace SaccFlightAndVehicles
                     && (AAMTargetObscuredDelay < .25f)
                         && AAMCurrentTargetDistance < MaxTargetDistance
                             && AAMTargets[AAMTarget].activeInHierarchy
-                                && (!AAMCurrentTargetSAVControl || (!AAMCurrentTargetSAVControl.Taxiing && !AAMCurrentTargetSAVControl.EntityControl._dead)))
+                                && (!AAMCurrentTargetSAVControl || (!AAMCurrentTargetSAVControl.Taxiing && !AAMCurrentTargetSAVControl.EntityControl.dead)))
                 {
                     if ((AAMTargetObscuredDelay < .25f) && AAMCurrentTargetDistance < MaxTargetDistance)
                     {
@@ -394,6 +394,7 @@ namespace SaccFlightAndVehicles
                     TargetIndicator.gameObject.SetActive(true);
                     TargetIndicator.position = HUDControl.transform.position + AAMCurrentTargetDirection;
                     TargetIndicator.localPosition = TargetIndicator.localPosition.normalized * distance_from_head;
+                    TargetIndicator.rotation = Quaternion.LookRotation(TargetIndicator.position - gameObject.transform.position, gameObject.transform.up);//This makes it not stretch when off to the side by fixing the rotation.
                 }
 
                 if (GUNLeadIndicator)
@@ -442,6 +443,8 @@ namespace SaccFlightAndVehicles
                     GUNLeadIndicator.position = TargetPos + PredictedPos;
                     //move lead indicator to match the distance of the rest of the hud
                     GUNLeadIndicator.localPosition = GUNLeadIndicator.localPosition.normalized * distance_from_head;
+
+                    GUNLeadIndicator.rotation = Quaternion.LookRotation(GUNLeadIndicator.position - gameObject.transform.position, gameObject.transform.up);//This makes it not stretch when off to the side by fixing the rotation.
 
                     RelativeTargetVelLastFrame = RelativeTargetVel;
                 }
