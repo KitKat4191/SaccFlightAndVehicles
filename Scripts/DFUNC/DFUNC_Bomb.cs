@@ -210,44 +210,47 @@ namespace SaccFlightAndVehicles
             { gameObject.SetActive(false); }
             OthersEnabled = false;
         }
+        
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void Update()
         {
-            if (func_active)
+            if (!func_active) return;
+
+            float Trigger;
+            if (UseLeftTrigger)
+            { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_PrimaryIndexTrigger"); }
+            else
+            { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_SecondaryIndexTrigger"); }
+            if (Trigger > 0.75 || (Input.GetKey(KeyCode.Space)))
             {
-                float Trigger;
-                if (UseLeftTrigger)
-                { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_PrimaryIndexTrigger"); }
-                else
-                { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_SecondaryIndexTrigger"); }
-                if (Trigger > 0.75 || (Input.GetKey(KeyCode.Space)))
+                if (!TriggerLastFrame)
                 {
-                    if (!TriggerLastFrame)
+                    if (NumBomb > 0 && (AllowFiringWhenGrounded || !(bool)SAVControl.GetProgramVariable("Taxiing")) && ((Time.time - LastBombDropTime) > BombDelay))
                     {
-                        if (DisallowFireIfWind)
-                        {
-                            if (((Vector3)SAVControl.GetProgramVariable("FinalWind")).magnitude > 0f)
-                            { return; }
-                        }
-                        if (NumBomb > 0 && (AllowFiringWhenGrounded || !(bool)SAVControl.GetProgramVariable("Taxiing")) && ((Time.time - LastBombDropTime) > BombDelay))
-                        {
-                            BombFire++;
-                            RequestSerialization();
-                            if (IsOwner)
-                            { EntityControl.SendEventToExtensions("SFEXT_O_BombLaunch"); }
-                        }
+                        BombFireFunc();
                     }
-                    else if (NumBomb > 0 && ((Time.time - LastBombDropTime) > BombHoldDelay) && (AllowFiringWhenGrounded || !(bool)SAVControl.GetProgramVariable("Taxiing")))
-                    {///launch every BombHoldDelay
-                        BombFire++;
-                        RequestSerialization();
-                        if (IsOwner)
-                        { EntityControl.SendEventToExtensions("SFEXT_O_BombLaunch"); }
-                    }
-                    TriggerLastFrame = true;
                 }
-                else { TriggerLastFrame = false; }
+                else if (NumBomb > 0 && ((Time.time - LastBombDropTime) > BombHoldDelay) && (AllowFiringWhenGrounded || !(bool)SAVControl.GetProgramVariable("Taxiing")))
+                {///launch every BombHoldDelay
+                    BombFireFunc();
+                }
+                TriggerLastFrame = true;
             }
+            else { TriggerLastFrame = false; }
         }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        private void BombFireFunc()
+        {
+            BombFire++;
+            RequestSerialization();
+            if (IsOwner)
+            { EntityControl.SendEventToExtensions("SFEXT_O_BombLaunch"); }
+
+            PredictedImpactPlane.transform.position = PredictedImpact.transform.position;
+        }
+        
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         public void LaunchBomb()
         {
             LastBombDropTime = Time.time;
