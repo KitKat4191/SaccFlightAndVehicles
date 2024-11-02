@@ -288,35 +288,34 @@ namespace SaccFlightAndVehicles
         }
         private void Update()
         {
-            if (func_active)
+            if (!func_active) return;
+            
+            float Trigger;
+            if (LeftDial)
+            { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_PrimaryIndexTrigger"); }
+            else
+            { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_SecondaryIndexTrigger"); }
+            if ((Trigger > 0.75 || Input.GetKey(KeyCode.Space)) && !Held || HoldingTrigger_Held)
             {
-                float Trigger;
-                if (LeftDial)
-                { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_PrimaryIndexTrigger"); }
-                else
-                { Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_SecondaryIndexTrigger"); }
-                if ((Trigger > 0.75 || Input.GetKey(KeyCode.Space)) && !Held || HoldingTrigger_Held)
+                if (!TriggerLastFrame)
                 {
-                    if (!TriggerLastFrame)
+                    if (DisallowFireIfWind)
                     {
-                        if (DisallowFireIfWind)
-                        {
-                            if (SAVControl && ((Vector3)SAVControl.GetProgramVariable("FinalWind")).magnitude > 0f)
-                            { return; }
-                        }
-                        if (NumBomb > 0 && (AllowFiringWhenGrounded || !SAVControl || !(bool)SAVControl.GetProgramVariable("Taxiing")) && ((Time.time - LastBombDropTime) > BombDelay))
-                        {
-                            TryToFire();
-                        }
+                        if (SAVControl && ((Vector3)SAVControl.GetProgramVariable("FinalWind")).magnitude > 0f)
+                        { return; }
                     }
-                    else if (NumBomb > 0 && ((Time.time - LastBombDropTime) > BombHoldDelay) && (AllowFiringWhenGrounded || (!SAVControl || !(bool)SAVControl.GetProgramVariable("Taxiing"))))
-                    {///launch every BombHoldDelay
-                        LaunchBomb_Owner();
+                    if (NumBomb > 0 && (AllowFiringWhenGrounded || !SAVControl || !(bool)SAVControl.GetProgramVariable("Taxiing")) && ((Time.time - LastBombDropTime) > BombDelay))
+                    {
+                        TryToFire();
                     }
-                    TriggerLastFrame = true;
                 }
-                else { TriggerLastFrame = false; }
+                else if (NumBomb > 0 && ((Time.time - LastBombDropTime) > BombHoldDelay) && (AllowFiringWhenGrounded || (!SAVControl || !(bool)SAVControl.GetProgramVariable("Taxiing"))))
+                {///launch every BombHoldDelay
+                    LaunchBomb_Owner();
+                }
+                TriggerLastFrame = true;
             }
+            else { TriggerLastFrame = false; }
         }
         public void LaunchBomb()
         {
