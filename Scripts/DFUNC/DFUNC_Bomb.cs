@@ -290,12 +290,12 @@ namespace SaccFlightAndVehicles
         {
             if (!func_active) return;
 
-            var Trigger = Input.GetAxisRaw(LeftDial 
+            var trigger = Input.GetAxisRaw(LeftDial 
                     ? "Oculus_CrossPlatform_PrimaryIndexTrigger" 
                     : "Oculus_CrossPlatform_SecondaryIndexTrigger"
                 );
             
-            if ((Trigger > 0.75 || Input.GetKey(KeyCode.Space)) && !Held || HoldingTrigger_Held)
+            if ((trigger > 0.75 || Input.GetKey(KeyCode.Space)) && !Held || HoldingTrigger_Held)
             {
                 if (!TriggerLastFrame)
                 {
