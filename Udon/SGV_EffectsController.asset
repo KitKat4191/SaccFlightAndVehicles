@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: SGV_EffectsController
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 563a04e7c9ce20144b0b980eb213c434,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 11afad4987a872c45ab1c7f5403ba78c,
     type: 2}
   udonAssembly: 
   assemblyError: 

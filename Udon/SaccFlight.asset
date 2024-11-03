@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: SaccFlight
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 768b394ac76cc9a42871067920c6fe84,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 9b8132f8042ec6343917831cc5228ae6,
     type: 2}
   udonAssembly: 
   assemblyError: 
@@ -104,13 +104,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: Thrust_Strength
+      Data: Thrust
     - Name: $v
       Entry: 7
       Data: 5|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: Thrust_Strength
+      Data: Thrust
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 6|System.RuntimeType, mscorlib
@@ -164,13 +164,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: Back_Thrust_Strength
+      Data: Back_Thrust
     - Name: $v
       Entry: 7
       Data: 9|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: Back_Thrust_Strength
+      Data: Back_Thrust
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 6

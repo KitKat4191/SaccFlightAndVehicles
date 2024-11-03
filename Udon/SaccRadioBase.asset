@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: SaccRadioBase
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 610fe985a864e7f43a4477e1332c4eb5,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: e84c422d2ac8cba4d92b0e1df0f2ff50,
     type: 2}
   udonAssembly: 
   assemblyError: 
@@ -332,13 +332,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: RadioEnabled
+      Data: RadioEnabled_
     - Name: $v
       Entry: 7
       Data: 18|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: RadioEnabled
+      Data: RadioEnabled_
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 19|System.RuntimeType, mscorlib

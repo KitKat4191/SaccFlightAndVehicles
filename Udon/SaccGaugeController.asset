@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: SaccGaugeController
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 142deaf90ff67484693c909b1f751957,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: ff279f71cfac46e4994579eaf2012488,
     type: 2}
   udonAssembly: 
   assemblyError: 
