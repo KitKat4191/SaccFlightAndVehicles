@@ -104,13 +104,17 @@ namespace SaccFlightAndVehicles
             Piloting = true;
             DisableOverrides();
         }
+        public void SFEXT_G_PilotExit()
+        {
+            if (OnCatapult)
+                CatapultLockOff();
+        }
         public void SFEXT_O_PilotExit()
         {
             if (!Launching)
             {
                 gameObject.SetActive(false);
                 Piloting = false;
-                if (OnCatapult) { SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, nameof(CatapultLockOff)); }
             }
             Selected = false;
             DisableOverrides();
@@ -123,7 +127,6 @@ namespace SaccFlightAndVehicles
         {
             IsOwner = true;
             colliderSmall();
-            if (OnCatapult) { SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, nameof(CatapultLockOff)); }
         }
         public void SFEXT_O_LoseOwnership()
         {
@@ -321,8 +324,8 @@ namespace SaccFlightAndVehicles
 
                 VehicleTransform.rotation = PlaneCatapultRotDif * CatapultTransform.rotation;
                 VehicleTransform.position = CatapultTransform.position + PlaneCatapultOffset;
-                VehicleRigidbody.position = VehicleTransform.position;
-                VehicleRigidbody.rotation = VehicleTransform.rotation;
+                VehicleRigidbody.position = VehicleTransform.position;//Unity 2022.3.6f1 bug workaround
+                VehicleRigidbody.rotation = VehicleTransform.rotation;//Unity 2022.3.6f1 bug workaround
                 VehicleRigidbody.velocity = Vector3.zero;
                 VehicleRigidbody.angularVelocity = Vector3.zero;
                 Quaternion CatapultRotDif = CatapultTransform.rotation * Quaternion.Inverse(CatapultRotLastFrame);

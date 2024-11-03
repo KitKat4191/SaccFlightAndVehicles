@@ -168,7 +168,7 @@ namespace SaccFlightAndVehicles
             else
             {
                 InEditor = false;
-                InVR = localPlayer.IsUserInVR();
+                InVR = EntityControl.InVR;
                 IsOwner = localPlayer.isMaster;
             }
             CenterOfMass = EntityControl.CenterOfMass;
@@ -203,7 +203,7 @@ namespace SaccFlightAndVehicles
         }
         private GameObject InstantiateWeapon()
         {
-            GameObject NewWeap = VRCInstantiate(AAM);
+            GameObject NewWeap = Instantiate(AAM);
             NewWeap.transform.SetParent(transform);
             return NewWeap;
         }
@@ -864,6 +864,7 @@ namespace SaccFlightAndVehicles
             Manning = true;
             RotationSpeedX = 0;
             RotationSpeedY = 0;
+            InVR = EntityControl.InVR;
             if (AAGunAnimator) AAGunAnimator.SetBool("inside", true);
             if (HUDControl) { HUDControl.GUN_TargetSpeedLerper = 0; }
 

@@ -20771,7 +20771,7 @@ GameObject:
   - component: {fileID: 3696832230787624701}
   - component: {fileID: 143369217813930649}
   m_Layer: 31
-  m_Name: DFUNC_ToggleBool
+  m_Name: MFD_ToggleBool
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20908,7 +20908,7 @@ GameObject:
   - component: {fileID: 4693608474245811900}
   - component: {fileID: 8926786362315834959}
   m_Layer: 31
-  m_Name: DFUNC_ResetCar
+  m_Name: MFD_ResetCar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -31023,7 +31023,7 @@ GameObject:
   - component: {fileID: 2458253610402081903}
   - component: {fileID: 3131735054785588433}
   m_Layer: 31
-  m_Name: DFUNC_Brake
+  m_Name: MFD_Brake
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47288,7 +47288,7 @@ GameObject:
   - component: {fileID: 8365848569129341958}
   - component: {fileID: 1302703782954168530}
   m_Layer: 31
-  m_Name: DFUNC_HandBrake
+  m_Name: MFD_HandBrake
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58051,7 +58051,6 @@ MonoBehaviour:
   VehicleMesh: {fileID: 5958633425667591128}
   MainObjectRenderer: {fileID: 2064891003211753749}
   OnlyChangeColliders: 0
-  OnboardVehicleLayer: 31
   Health: 160
   VehicleAnimator: {fileID: 6141758680382097274}
   NumStepsSec: 300
@@ -58289,7 +58288,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 6141758680061051261}
   EntityControl: {fileID: 6141758680382097273}
   IsPilotSeat: 0
-  ThisSeatOnly: {fileID: 0}
+  PassengerFunctions: {fileID: 0}
   EnableInSeat: []
   DisableInSeat: []
   AdjustSeatPosition: 1
@@ -58457,8 +58456,9 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 6141758680273700199}
   EntityControl: {fileID: 6141758680382097273}
   IsPilotSeat: 1
-  ThisSeatOnly: {fileID: 6169200270901643276}
-  EnableInSeat: []
+  PassengerFunctions: {fileID: 0}
+  EnableInSeat:
+  - {fileID: 6169200270901643276}
   DisableInSeat: []
   AdjustSeatPosition: 1
   TargetEyePosition: {fileID: 6141758679963414950}
@@ -58711,7 +58711,6 @@ MonoBehaviour:
   AAMTargetsLayer:
     serializedVersion: 2
     m_Bits: 33554432
-  InVehicleOnly: {fileID: 0}
   EnableInVehicle:
   - {fileID: 1926991246271948119}
   DisableInVehicle: []
@@ -58736,7 +58735,10 @@ MonoBehaviour:
   CustomPickup_DropKey: 103
   CustomPickup_RotationOffsetVR: {x: 0, y: 60, z: 90}
   CustomPickup_RotationOffsetDesktop: {x: 0, y: 35, z: 90}
+  PassengerFunctionControllers: []
   AAMTargets: []
+  DialFuncPos: 0
+  passengerFuncIgnorePassengerFlag: 0
 --- !u!95 &6141758680382097274
 Animator:
   serializedVersion: 5
@@ -59055,7 +59057,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 6141758680559467796}
   EntityControl: {fileID: 6141758680382097273}
   IsPilotSeat: 0
-  ThisSeatOnly: {fileID: 0}
+  PassengerFunctions: {fileID: 0}
   EnableInSeat: []
   DisableInSeat: []
   AdjustSeatPosition: 1
@@ -59225,7 +59227,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 6141758681580453100}
   EntityControl: {fileID: 6141758680382097273}
   IsPilotSeat: 0
-  ThisSeatOnly: {fileID: 0}
+  PassengerFunctions: {fileID: 0}
   EnableInSeat: []
   DisableInSeat: []
   AdjustSeatPosition: 1
@@ -64628,7 +64630,7 @@ GameObject:
   - component: {fileID: 3333046012508503185}
   - component: {fileID: 395120559476290886}
   m_Layer: 31
-  m_Name: DFUNC_ToggleBool_FUNCON
+  m_Name: MFD_ToggleBool_FUNCON
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76671,7 +76673,7 @@ GameObject:
   - component: {fileID: 2313239440959091966}
   - component: {fileID: 2787757826837923178}
   m_Layer: 31
-  m_Name: DFUNC_Horn
+  m_Name: MFD_Horn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

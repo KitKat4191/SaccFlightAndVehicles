@@ -47,6 +47,7 @@ namespace SaccFlightAndVehicles
         public UdonSharpBehaviour[] LiftSurfaces;
         private bool LiftSurfacesEnabled = true;
         [Header("Response:")]
+        [Header("Some values require re-entering playmode to take full effect (ThrustVec..)")]
         [Tooltip("Vehicle thrust at max throttle without afterburner")]
         public float ThrottleStrength = 20f;
         [Tooltip("Make VR Throttle motion controls use the Y axis instead of the Z axis for adjustment (Helicopter collective)")]
@@ -73,7 +74,7 @@ namespace SaccFlightAndVehicles
         public float AirFriction = 0.0004f;
         [Tooltip("Pitch force multiplier, (gets stronger with airspeed)")]
         public float PitchStrength = 5f;
-        [Tooltip("Pitch rotation force (as multiple of PitchStrength) (doesn't get stronger with airspeed, useful for helicopters and ridiculous jets). Setting this to a non - zero value disables inversion of joystick pitch controls when vehicle is travelling backwards")]
+        [Tooltip("Pitch rotation force (as multiple of PitchStrength) (doesn't get stronger with airspeed, useful for helicopters and ridiculous jets). Setting this to a nonzero value disables inversion of joystick pitch controls when vehicle is travelling backwards")]
         [Range(0.0f, 1f)]
         public float PitchThrustVecMulti = 0f;
         [Tooltip("Force that stops vehicle from pitching, (gets stronger with airspeed)")]
@@ -86,7 +87,7 @@ namespace SaccFlightAndVehicles
         public float ReversingPitchStrengthMulti = 2;
         [Tooltip("Yaw force multiplier, (gets stronger with airspeed)")]
         public float YawStrength = 3f;
-        [Tooltip("Yaw rotation force (as multiple of YawStrength) (doesn't get stronger with airspeed, useful for helicopters and ridiculous jets). Setting this to a non - zero value disables inversion of joystick pitch controls when vehicle is travelling backwards")]
+        [Tooltip("Yaw rotation force (as multiple of YawStrength) (doesn't get stronger with airspeed, useful for helicopters and ridiculous jets). Setting this to a nonzero value disables inversion of joystick pitch controls when vehicle is travelling backwards")]
         [Range(0.0f, 1f)]
         public float YawThrustVecMulti = 0f;
         [Tooltip("Force that stops vehicle from yawing, (gets stronger with airspeed)")]
@@ -99,7 +100,7 @@ namespace SaccFlightAndVehicles
         public float ReversingYawStrengthMulti = 2.4f;
         [Tooltip("Roll force multiplier, (gets stronger with airspeed)")]
         public float RollStrength = 450f;
-        [Tooltip("Roll rotation force (as multiple of RollStrength) (doesn't get stronger with airspeed, useful for helicopters and ridiculous jets). Setting this to a non - zero value disables inversion of joystick pitch controls when vehicle is travelling backwards")]
+        [Tooltip("Roll rotation force (as multiple of RollStrength) (doesn't get stronger with airspeed, useful for helicopters and ridiculous jets). Setting this to a nonzero value disables inversion of joystick pitch controls when vehicle is travelling backwards")]
         [Range(0.0f, 1f)]
         public float RollThrustVecMulti = 0f;
         [Tooltip("Force that stops vehicle from rolling, (gets stronger with airspeed)")]
@@ -212,8 +213,7 @@ namespace SaccFlightAndVehicles
         [Tooltip("Real angle offset from (0 == thrusting backwards) that the SFEXT_O_Enter/ExitVTOL is called. The event used for disabling cruise and flight limits")]
         public float EnterVTOLEvent_Angle = 20;
         [Header("Other:")]
-        [Tooltip("Adjusts all values that would need to be adjusted if you changed the mass automatically on Start(). Including all wheel colliders suspension values")]
-        public bool AutoAdjustValuesToMass = true;
+        public bool ReverseThrustAllowAfterburner = false;
         [Tooltip("Transform to base the pilot's throttle and joystick controls from. Used to make vertical throttle for helicopters, or if the cockpit of your vehicle can move, on transforming vehicle")]
         public Transform ControlsRoot;
         [Tooltip("Wind speed on each axis")]
@@ -662,6 +662,7 @@ namespace SaccFlightAndVehicles
             UsingManualSync = !EntityControl.EntityObjectSync;
 
             localPlayer = Networking.LocalPlayer;
+            InVR = EntityControl.InVR;
             if (localPlayer == null)
             {
                 Piloting = true;
@@ -674,7 +675,6 @@ namespace SaccFlightAndVehicles
             }
             else
             {
-                InVR = localPlayer.IsUserInVR();
                 if (localPlayer.isMaster)
                 {
                     if (!UsingManualSync)
@@ -713,41 +713,16 @@ namespace SaccFlightAndVehicles
                 }
             }
 
-
-            if (AutoAdjustValuesToMass)
+            float RBMass = VehicleRigidbody.mass;
+            foreach (WheelCollider wheel in VehicleWheelColliders)
             {
-                //values that should feel the same no matter the weight of the aircraft
-                float RBMass = VehicleRigidbody.mass;
-                ThrottleStrength *= RBMass;
-                PitchStrength *= RBMass;
-                PitchFriction *= RBMass;
-                PitchConstantFriction *= RBMass;
-                YawStrength *= RBMass;
-                YawFriction *= RBMass;
-                YawConstantFriction *= RBMass;
-                RollStrength *= RBMass;
-                RollFriction *= RBMass;
-                RollConstantFriction *= RBMass;
-                VelStraightenStrPitch *= RBMass;
-                VelStraightenStrYaw *= RBMass;
-                YawAoaRollForceMulti *= RBMass;
-                PitchAoaPitchForceMulti *= RBMass;
-                Lift *= RBMass;
-                MaxLift *= RBMass;
-                VelLift *= RBMass;
-                VelLiftMax *= RBMass;
-                AdverseRoll *= RBMass;
-                AdverseYaw *= RBMass;
-                GroundEffectLiftMax *= RBMass;
-                foreach (WheelCollider wheel in VehicleWheelColliders)
-                {
-                    wheel.mass *= RBMass;
-                    JointSpring SusiSpring = wheel.suspensionSpring;
-                    SusiSpring.spring *= RBMass;
-                    SusiSpring.damper *= RBMass;
-                    wheel.suspensionSpring = SusiSpring;
-                }
+                wheel.mass *= RBMass;
+                JointSpring SusiSpring = wheel.suspensionSpring;
+                SusiSpring.spring *= RBMass;
+                SusiSpring.damper *= RBMass;
+                wheel.suspensionSpring = SusiSpring;
             }
+
             OutsideVehicleLayer = VehicleMesh.gameObject.layer;//get the layer of the vehicle as set by the world creator
             VehicleAnimator = EntityControl.GetComponent<Animator>();
 
@@ -896,7 +871,6 @@ namespace SaccFlightAndVehicles
 
                 //synced variables because rigidbody values aren't accessable by non-owner players
                 CurrentVel = VehicleRigidbody.velocity;//CurrentVel is set by SAV_SyncScript for non owners
-                Speed = CurrentVel.magnitude;
                 if (Piloting)
                 {
                     DoRepeatingWorld();
@@ -1077,10 +1051,10 @@ namespace SaccFlightAndVehicles
                             }
                             float ThrottleDifference = ThrottleZeroPoint - HandThrottleAxis;
                             ThrottleDifference *= ThrottleSensitivity;
-                            bool VTOLandAB_Disallowed = (!VTOLAllowAfterburner && VTOLAngle != 0);/*don't allow VTOL AB disabled vehicles, false if attemping to*/
-
+                            // check if VTOLING and VTOL+AB is not allowed OR if reversing and reverse+AB is not allowed 
+                            bool AB_Disallowed = (!VTOLAllowAfterburner && VTOLAngleDegrees > EnterVTOLEvent_Angle) || (!ReverseThrustAllowAfterburner && _InvertThrust);
                             //Detent function to prevent you going into afterburner by accident (bit of extra force required to turn on AB (actually hand speed))
-                            if (((HandDistanceZLastFrame - HandThrottleAxis) * ThrottleSensitivity > .05f)/*detent overcome*/ && !VTOLandAB_Disallowed && Fuel > LowFuel || ((PlayerThrottle > ThrottleAfterburnerPoint/*already in afterburner*/&& !VTOLandAB_Disallowed) || !HasAfterburner))
+                            if (((HandDistanceZLastFrame - HandThrottleAxis) * ThrottleSensitivity > .05f)/*detent overcome*/ && !AB_Disallowed && Fuel > LowFuel || ((PlayerThrottle > ThrottleAfterburnerPoint/*already in afterburner*/&& !AB_Disallowed) || !HasAfterburner))
                             {
                                 PlayerThrottle = Mathf.Clamp(TempThrottle + ThrottleDifference, 0, 1);
                             }
@@ -1115,7 +1089,7 @@ namespace SaccFlightAndVehicles
                             { TaxiingStillMulti = Mathf.Min(Speed * TaxiFullTurningSpeedDivider, 1); }
                             Taxiinglerper = Mathf.Lerp(Taxiinglerper, RotationInputs.y * TaxiRotationSpeed * Time.smoothDeltaTime * TaxiingStillMulti, 1 - Mathf.Pow(0.5f, TaxiRotationResponse * DeltaTime));
                             VehicleTransform.Rotate(VehicleTransform.up, Taxiinglerper);
-                            VehicleRigidbody.rotation = VehicleTransform.rotation;
+                            VehicleRigidbody.rotation = VehicleTransform.rotation;//Unity 2022.3.6f1 bug workaround
 
                             StillWindMulti = Mathf.Min(Speed * .1f, 1);
                             ThrustVecGrounded = 0;
@@ -1131,9 +1105,9 @@ namespace SaccFlightAndVehicles
                         {
                             if (HasAfterburner)
                             {
-                                if ((VTOLAngleDegrees < EnterVTOLEvent_Angle || VTOLAllowAfterburner))
+                                if ((VTOLAngleDegrees < EnterVTOLEvent_Angle || VTOLAllowAfterburner) && (ReverseThrustAllowAfterburner || !_InvertThrust))
                                 {
-                                    if (AfterburnerOn)
+                                    if (PlayerThrottle == 1)
                                     { PlayerThrottle = ThrottleAfterburnerPoint; }
                                     else
                                     { PlayerThrottle = 1; }
@@ -1278,7 +1252,7 @@ namespace SaccFlightAndVehicles
                     }
                     DoRepeatingWorld();
                 }
-                SoundBarrier = (-Mathf.Clamp(Mathf.Abs(Speed - 343) / SoundBarrierWidth, 0, 1) + 1) * SoundBarrierStrength;
+                SoundBarrier = (1 - Mathf.Clamp(Mathf.Abs(Speed - 343) / SoundBarrierWidth, 0, 1)) * SoundBarrierStrength;
             }
             else//non-owners need to know these values
             {
@@ -1299,6 +1273,7 @@ namespace SaccFlightAndVehicles
             if (IsOwner)
             {
                 float DeltaTime = Time.fixedDeltaTime;
+                Speed = VehicleRigidbody.velocity.magnitude;
                 if (Piloting)
                 {
                     WindAndAoA();
@@ -1427,7 +1402,7 @@ namespace SaccFlightAndVehicles
                             VTOLInputAcc *= GroundEffectAndVelLift;
 
                             //Add Airplane Ground Effect
-                            GroundEffectAndVelLift = AoALift_Min * GroundEffect(false, GroundEffectEmpty.position, -VehicleTransform.up, GroundEffectStrength, SpeedLiftFactor);
+                            GroundEffectAndVelLift = AoALift_Min * GroundEffect(false, GroundEffectEmpty.position, -VehicleTransform.up, GroundEffectStrength / VehicleRigidbody.mass, SpeedLiftFactor);
                             //add lift and thrust
 
                             FinalInputAcc += VTOLInputAcc;
@@ -1436,7 +1411,7 @@ namespace SaccFlightAndVehicles
                         }
                         else//Simpler version for non-VTOL craft
                         {
-                            GroundEffectAndVelLift = AoALift_Min * GroundEffect(false, GroundEffectEmpty.position, -VehicleTransform.up, GroundEffectStrength, SpeedLiftFactor);
+                            GroundEffectAndVelLift = AoALift_Min * GroundEffect(false, GroundEffectEmpty.position, -VehicleTransform.up, GroundEffectStrength / VehicleRigidbody.mass, SpeedLiftFactor);
 
                             FinalInputAcc.y += GroundEffectAndVelLift;
                             FinalInputAcc.z += Thrust;
@@ -1462,8 +1437,6 @@ namespace SaccFlightAndVehicles
                         Vector3 FinalInputRot = new Vector3((((-localAngularVelocity.x * PitchFriction * rotlift * AoALiftPitch * AoALiftYaw) - (localAngularVelocity.x * PitchConstantFriction)) + pitchaoapitchforce) * Atmosphere,// X Pitch
                             (((-localAngularVelocity.y * YawFriction * rotlift * AoALiftPitch * AoALiftYaw) + ADVYaw) - (localAngularVelocity.y * YawConstantFriction)) * Atmosphere,// Y Yaw
                                 ((LerpedRoll + yawaoarollforce + (-localAngularVelocity.z * RollFriction * rotlift * AoALiftPitch * AoALiftYaw) + ADVRoll) - (localAngularVelocity.z * RollConstantFriction)) * Atmosphere);// Z Roll
-
-                        //create values for use in fixedupdate (control input and straightening forces)
 
                         if (PitchMoment)
                         { Pitching = ((((VehicleTransform.up * LerpedPitch) + (VehicleTransform.up * downspeed * VelStraightenStrPitch * AoALiftPitch * rotlift)) * Atmosphere)); }
@@ -1514,35 +1487,38 @@ namespace SaccFlightAndVehicles
                 }
 
                 if (Asleep) { return; }
-                //lerp velocity toward 0 to simulate air friction
+
                 Vector3 VehicleVel = VehicleRigidbody.velocity;
                 if (!_DisablePhysicsApplication)
                 {
+                    // I tried changing ForceMode to Acceleration but for some reason the results are different,
+                    // so until I work out why, just multiply forces by mass
+                    float RBMass = VehicleRigidbody.mass;
+                    // lerp velocity toward zero/windspeed for 'air friction'
                     VehicleRigidbody.velocity = Vector3.Lerp(VehicleVel, FinalWind * StillWindMulti * Atmosphere, 1 - Mathf.Pow(0.5f, (AirFriction + SoundBarrier) * ExtraDrag * 90 * DeltaTime));
-                    //Apply forces calculated in update()
                     if (wrecked)
                     {
                         float negHealthPc = -Health / -ExplodeHealth;
                         VehicleRigidbody.AddRelativeTorque(wreckedSpinForce * negHealthPc * /* StillWintMulti requires EngineOn + Grounded, so: */ Mathf.Min(AirSpeed * .1f, 1), ForceMode.Acceleration);
-                        VehicleRigidbody.AddRelativeForce(VehicleForce * (1 - negHealthPc), ForceMode.Force);
+                        VehicleRigidbody.AddRelativeForce(VehicleForce * (1 - negHealthPc) * RBMass, ForceMode.Force);
                     }
                     else
-                    { VehicleRigidbody.AddRelativeForce(VehicleForce, ForceMode.Force); }
-                    VehicleRigidbody.AddRelativeTorque(VehicleTorque, ForceMode.Force);
+                    { VehicleRigidbody.AddRelativeForce(VehicleForce * RBMass, ForceMode.Force); }
+                    VehicleRigidbody.AddRelativeTorque(VehicleTorque * RBMass, ForceMode.Force);
                     //apply pitching using pitch moment
                     if (PitchMoment)
-                    { VehicleRigidbody.AddForceAtPosition(Pitching, PitchMoment.position, ForceMode.Force); }
+                    { VehicleRigidbody.AddForceAtPosition(Pitching * RBMass, PitchMoment.position, ForceMode.Force); }
                     else
-                    { VehicleRigidbody.AddRelativeTorque(Pitching, ForceMode.Force); }
+                    { VehicleRigidbody.AddRelativeTorque(Pitching * RBMass, ForceMode.Force); }
                     //deltatime is built into ForceMode.Force
                     //apply yawing using yaw moment
                     if (YawMoment)
-                    { VehicleRigidbody.AddForceAtPosition(Yawing, YawMoment.position, ForceMode.Force); }
+                    { VehicleRigidbody.AddForceAtPosition(Yawing * RBMass, YawMoment.position, ForceMode.Force); }
                     else
-                    { VehicleRigidbody.AddRelativeTorque(-Yawing, ForceMode.Force); }
+                    { VehicleRigidbody.AddRelativeTorque(-Yawing * RBMass, ForceMode.Force); }
                 }
                 //calc Gs
-                float gravity = 9.80665f * DeltaTime;
+                float gravity = 9.81f * DeltaTime;
                 LastFrameVel.y -= gravity; //add gravity
 
                 Gs3 = VehicleTransform.InverseTransformDirection(VehicleVel - LastFrameVel);
@@ -1720,16 +1696,6 @@ namespace SaccFlightAndVehicles
             LastFrameVel = Vector3.zero;
             EnableLiftSurfaces(false);
         }
-        public void SFEXT_L_CoMSet()
-        {
-            if (Initialized)
-            { SetCoMMeshOffset(); }
-        }
-        private void OnEnable()
-        {
-            if (Initialized)
-            { SetCoMMeshOffset(); }
-        }
         public void SetCoMMeshOffset()
         {
             //move objects to so that the vehicle's main pivot is at the CoM so that syncscript's rotation is smoother
@@ -1741,7 +1707,7 @@ namespace SaccFlightAndVehicles
                 VehicleTransform.GetChild(i).position -= CoMOffset;
             }
             VehicleTransform.position += CoMOffset;
-            VehicleRigidbody.position = VehicleTransform.position;
+            VehicleRigidbody.position = VehicleTransform.position;//Unity 2022.3.6f1 bug workaround
             SendCustomEventDelayedSeconds(nameof(SetCoM_ITR), Time.fixedDeltaTime);//this has to be delayed because ?
             EntityControl.Spawnposition = VehicleTransform.localPosition;
             EntityControl.Spawnrotation = VehicleTransform.localRotation;
@@ -1749,6 +1715,8 @@ namespace SaccFlightAndVehicles
         public void SetCoM_ITR()
         {
             VehicleRigidbody.centerOfMass = VehicleTransform.InverseTransformDirection(CenterOfMass.position - VehicleTransform.position);//correct position if scaled
+            EntityControl.CoMSet = true;
+            VehicleRigidbody.ResetInertiaTensor();
             VehicleRigidbody.inertiaTensorRotation = Quaternion.SlerpUnclamped(Quaternion.identity, VehicleRigidbody.inertiaTensorRotation, InertiaTensorRotationMulti);
             if (InvertITRYaw)
             {
@@ -1756,7 +1724,6 @@ namespace SaccFlightAndVehicles
                 ITR.x *= -1;
                 VehicleRigidbody.inertiaTensorRotation = Quaternion.Euler(ITR);
             }
-            VehicleRigidbody.ResetInertiaTensor();
         }
         public void FuelEvents()
         {
@@ -2259,10 +2226,7 @@ namespace SaccFlightAndVehicles
         public void SFEXT_O_PilotEnter()
         {
             if (Asleep) { WakeUp(); }
-            if (!InEditor)
-            {
-                InVR = localPlayer.IsUserInVR();
-            }
+            InVR = EntityControl.InVR;
             VTOLAngleInput = VTOLAngle;
             VTOLAngleDegrees = VTOLMinAngle + (vtolangledif * VTOLAngle);
             GDHitRigidbody = null;
@@ -2370,24 +2334,31 @@ namespace SaccFlightAndVehicles
             //angle of attack stuff, pitch and yaw are calculated seperately
             //pitch and yaw each have a curve for when they are within the 'MaxAngleOfAttack' and a linear version up to 90 degrees, which are Max'd (using Mathf.Clamp) for the final result.
             //the linear version is used for high aoa, and is 0 when at 90 degrees, and 1(multiplied by HighAoaMinControl) at 0. When at more than 90 degrees, the control comes back with the same curve but the inputs are inverted. (unless thrust vectoring is enabled) The invert code is elsewhere.
-            AoALiftPitch = Mathf.Min(Mathf.Abs(AngleOfAttackPitch) / MaxAngleOfAttackPitch, Mathf.Abs(Mathf.Abs(AngleOfAttackPitch) - 180) / MaxAngleOfAttackPitch);//angle of attack as 0-1 float, for backwards and forwards
-            AoALiftPitch = -AoALiftPitch + 1;
-            AoALiftPitch = -Mathf.Pow((1 - AoALiftPitch), AoaCurveStrength) + 1;//give it a curve
 
-            float AoALiftPitchMin = Mathf.Min(Mathf.Abs(AngleOfAttackPitch) * 0.0111111111f/* same as divide by 90 */, Mathf.Abs(Mathf.Abs(AngleOfAttackPitch) - 180) * 0.0111111111f/* same as divide by 90 */);//linear version to 90 for high aoa
-            AoALiftPitchMin = Mathf.Clamp((-AoALiftPitchMin + 1) * HighPitchAoaMinControl, 0, 1);
+            float absPitch = Mathf.Abs(AngleOfAttackPitch);
+            float absYaw = Mathf.Abs(AngleOfAttackYaw);
+            //AngleOfAttack = Vector3.Angle(VecForward, AirVel);
+            //^ the reason I'm not doing this is because it would give a circular result instead of square, when the physics is square
+            // which would change a bunch of stuff that uses the value, (Limits, Effects/Sounds)
+            // Limits in particular is important because it effects the controls, based on the physics.
+            AngleOfAttack = Mathf.Max(absPitch, absYaw);
+
+            //for this part AoA maxes out at 90 and reduces again as move towards facing backwards
+            if (absPitch > 90) absPitch = 180 - absPitch;//flying backwards
+            AoALiftPitch = absPitch / MaxAngleOfAttackPitch;//angle of attack as 0-1 float, for backwards and forwards
+            AoALiftPitch = 1 - Mathf.Pow(AoALiftPitch, AoaCurveStrength);//give it a curve
+
+            float AoALiftPitchMin = absPitch * 0.0111111111f/* same as divide by 90 */;//linear version to 90 for high aoa
+            AoALiftPitchMin = Mathf.Clamp01((1 - AoALiftPitchMin) * HighPitchAoaMinControl);
             AoALiftPitch = Mathf.Clamp(AoALiftPitch, AoALiftPitchMin, 1);
 
-            AoALiftYaw = Mathf.Min(Mathf.Abs(AngleOfAttackYaw) / MaxAngleOfAttackYaw, Mathf.Abs((Mathf.Abs(AngleOfAttackYaw) - 180)) / MaxAngleOfAttackYaw);
+            if (absYaw > 90) absYaw = 180 - absYaw;//flying backwards
+            AoALiftYaw = absYaw / MaxAngleOfAttackYaw;
+            AoALiftYaw = 1 - Mathf.Pow(AoALiftYaw, AoaCurveStrength);//give it a curve
 
-            AoALiftYaw = -AoALiftYaw + 1;
-            AoALiftYaw = -Mathf.Pow((1 - AoALiftYaw), AoaCurveStrength) + 1;//give it a curve
-
-            float AoALiftYawMin = Mathf.Min(Mathf.Abs(AngleOfAttackYaw) * 0.0111111111f/* same as divide by 90 */, Mathf.Abs(Mathf.Abs(AngleOfAttackYaw) - 180) * 0.0111111111f/* same as divide by 90 */);//linear version to 90 for high aoa
-            AoALiftYawMin = Mathf.Clamp((-AoALiftYawMin + 1) * HighYawAoaMinControl, 0, 1);
+            float AoALiftYawMin = absYaw * 0.0111111111f/* same as divide by 90 */;//linear version to 90 for high aoa
+            AoALiftYawMin = Mathf.Clamp01((1 - AoALiftYawMin) * HighYawAoaMinControl);
             AoALiftYaw = Mathf.Clamp(AoALiftYaw, AoALiftYawMin, 1);
-
-            AngleOfAttack = Mathf.Max(Mathf.Abs(AngleOfAttackPitch), Mathf.Abs(AngleOfAttackYaw));
         }
         private float GroundEffect(bool VTOL, Vector3 Position, Vector3 Direction, float GEStrength, float speedliftfac)
         {
@@ -2464,7 +2435,7 @@ namespace SaccFlightAndVehicles
                 {
                     if (_EngineOn)
                     {
-                        float SpeedForVTOL_Inverse_xVTOL = ((SpeedForVTOL * -1) + 1) * VTOLAngleForward90;
+                        float SpeedForVTOL_Inverse_xVTOL = (1 - SpeedForVTOL) * VTOLAngleForward90;
                         //the thrust vec values are linearly scaled up the slower you go while in VTOL, from 0 at VTOLLoseControlSpeed
                         PitchThrustVecMulti = Mathf.Lerp(PitchThrustVecMultiStart, VTOLPitchThrustVecMulti, SpeedForVTOL_Inverse_xVTOL);
                         YawThrustVecMulti = Mathf.Lerp(YawThrustVecMultiStart, VTOLYawThrustVecMulti, SpeedForVTOL_Inverse_xVTOL);

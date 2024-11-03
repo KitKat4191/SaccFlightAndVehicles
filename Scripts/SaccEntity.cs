@@ -210,6 +210,7 @@ namespace SaccFlightAndVehicles
         [System.NonSerializedAttribute] public float PilotExitTime;
         [System.NonSerializedAttribute] public float PilotEnterTime;
         [System.NonSerializedAttribute] public bool Holding;
+        [System.NonSerializedAttribute] public bool CoMSet = false;
         public void Init() { Start(); }
         private void Start()
         {
@@ -236,15 +237,6 @@ namespace SaccFlightAndVehicles
             Spawnposition = transform.localPosition;
             Spawnrotation = transform.localRotation;
             VehicleRigidbody = GetComponent<Rigidbody>();
-            if (CenterOfMass)
-            {
-                SetCoM();
-            }
-            else
-            {
-                CenterOfMass = gameObject.transform;
-                Debug.Log(gameObject.name + ": " + "No Center Of Mass Set");
-            }
 
             if (!CustomPickup_GrabPosition) { CustomPickup_GrabPosition = transform; }
             updateDisableInteractive();
@@ -375,6 +367,11 @@ namespace SaccFlightAndVehicles
             }
 
             SendEventToExtensions("SFEXT_L_EntityStart");
+
+            if (!CoMSet)
+            {
+                SetCoM();
+            }
 
             //if in editor play mode without clientsim
             if (InEditor)
@@ -673,6 +670,7 @@ namespace SaccFlightAndVehicles
         {
             Using = true;
             Piloting = true;
+            if (!InEditor) { InVR = localPlayer.IsUserInVR(); }
             InVehicle = true; SendCustomEventDelayedFrames(nameof(InVehicleControls), 1);
             Occupied = true;
             localPlayer.SetPlayerTag("SF_LocalPiloting", "T");
@@ -692,7 +690,6 @@ namespace SaccFlightAndVehicles
             if (RStickDisplayHighlighter)
             { RStickDisplayHighlighter.localRotation = Quaternion.Euler(0, 180, 0); }
 
-            if (!InEditor && localPlayer.IsUserInVR()) { InVR = true; }
             EnableInVehicle_Enable();
             DisableInVehicle_Disable();
             if (!_DisallowOwnerShipTransfer)
@@ -963,11 +960,15 @@ namespace SaccFlightAndVehicles
         public void SetCoM()
         {
             //WARNING: Setting this will reset ITR in SaccAirVehicle etc.
-            if (VehicleRigidbody)
+            if (CenterOfMass)
             {
-                VehicleRigidbody.centerOfMass = transform.InverseTransformDirection(CenterOfMass.position - transform.position);//correct position if scaled}
+                if (VehicleRigidbody)
+                {
+                    VehicleRigidbody.centerOfMass = transform.InverseTransformDirection(CenterOfMass.position - transform.position);//correct position if scaled}
+                    VehicleRigidbody.ResetInertiaTensor();
+                }
             }
-            SendEventToExtensions("SFEXT_L_CoMSet");
+            else { Debug.LogWarning(gameObject.name + ": No CoM set"); }
         }
         [System.NonSerialized] public Collision LastCollisionEnter;
         private void OnCollisionEnter(Collision Col)

@@ -89,6 +89,7 @@ namespace SaccFlightAndVehicles
             ControlsRoot = SAVControl.ControlsRoot;
             ThrottleSensitivity = SAVControl.ThrottleSensitivity;
             IsOwner = SAVControl.IsOwner;
+            InVR = EntityControl.InVR;
             if (DefaultEnabled)
             {
                 ThreeDThrustActive = true;
@@ -142,27 +143,25 @@ namespace SaccFlightAndVehicles
         {
             if (Input > 0.75)
             {
-                if (LeftDial)
+                if (UseAsDFUNC)
                 {
-                    HandPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
+                    if (LeftDial)
+                    { HandPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position; }
+                    else
+                    { HandPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position; }
                 }
                 else
                 {
-                    HandPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
+                    if (SAVControl.SwitchHandsJoyThrottle)
+                    { HandPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position; }
+                    else
+                    { HandPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position; }
                 }
                 HandPosThrottle = ControlsRoot.transform.InverseTransformPoint(HandPos);
                 if (!ThreeDThrottleLastFrame)
                 {
                     ThrottleZeroPoint = HandPosThrottle;
                     if (ThrustArrow) { ThrustArrow.position = HandPos; }
-                }
-                if (LeftDial)
-                {
-                    HandPosThrottle = ControlsRoot.transform.InverseTransformPoint(localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position);
-                }
-                else
-                {
-                    HandPosThrottle = ControlsRoot.transform.InverseTransformPoint(localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position);
                 }
                 ThrustArrow.LookAt(HandPos);
                 Vector3 ThreeDThrottleDifference = (ThrottleZeroPoint - HandPosThrottle) * ThrottleSensitivity;

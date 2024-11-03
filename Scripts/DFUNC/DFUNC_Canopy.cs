@@ -68,7 +68,7 @@ namespace SaccFlightAndVehicles
         {
             gameObject.SetActive(true);
             if (Dial_Funcon) { Dial_Funcon.SetActive(CanopyOpen); }
-            if (!InEditor) { InVR = localPlayer.IsUserInVR(); }
+            InVR = EntityControl.InVR;
         }
         public void SFEXT_O_PilotExit()
         {
@@ -115,7 +115,7 @@ namespace SaccFlightAndVehicles
         {
             CanopyBroken = false;
             CanopyAnimator.SetBool(AnimCanopyBroken, false);
-            if ((bool)SAVControl.GetProgramVariable("IsOwner")) { SendCustomEventDelayedFrames(nameof(SendCanopyRepair), 1); }
+            if (EntityControl.IsOwner) { SendCustomEventDelayedFrames(nameof(SendCanopyRepair), 1); }
             if (CanopyOpen) { CanopyClosing(); }
         }
         private void Update()
@@ -162,7 +162,7 @@ namespace SaccFlightAndVehicles
             CanopyOpen = true;
             CanopyAnimator.SetBool(AnimCanopyBool, true);
             SoundControl.SendCustomEvent("DoorOpen");
-            if ((bool)SAVControl.GetProgramVariable("IsOwner"))
+            if (EntityControl.IsOwner)
             {
                 SendCustomEventDelayedFrames(nameof(SendCanopyOpened), 1);
             }
@@ -183,7 +183,7 @@ namespace SaccFlightAndVehicles
             CanopyTransitioning = true;
             SoundControl.SendCustomEventDelayedSeconds("DoorClose", CanopyCloseTime);
             SendCustomEventDelayedSeconds("SetCanopyTransitioningFalse", CanopyCloseTime);
-            if ((bool)SAVControl.GetProgramVariable("IsOwner"))
+            if (EntityControl.IsOwner)
             {
                 SendCustomEventDelayedFrames(nameof(SendCanopyClosed), 1);
             }
@@ -221,7 +221,7 @@ namespace SaccFlightAndVehicles
             CanopyOpen = true;
             CanopyBroken = true;
             CanopyAnimator.SetBool(AnimCanopyBroken, true);
-            if ((bool)SAVControl.GetProgramVariable("IsOwner"))
+            if (EntityControl.IsOwner)
             {
                 SendCustomEventDelayedFrames(nameof(SendCanopyBreak), 1);
             }

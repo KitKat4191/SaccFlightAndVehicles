@@ -73,6 +73,8 @@ namespace SaccFlightAndVehicles
         public float YawResponse = 20f;
         [Tooltip("Adjust the rotation of Unity's inbuilt Inertia Tensor Rotation, which is a function of rigidbodies. If set to 0, the vehicle will be very stable and feel boring to fly.")]
         public float InertiaTensorRotationMulti = 1;
+        [Tooltip("Inverts Z axis of the Inertia Tensor Rotation, causing the direction of the yawing experienced after rolling to invert")]
+        public bool InvertITRYaw = false;
         [Tooltip("Rotational inputs are multiplied by current speed to make flying at low speeds feel heavier. Above the speed input here, all inputs will be at 100%. Linear. (Meters/second)")]
         public float RotMultiMaxSpeed = 10;
         [Tooltip("How much the the vehicle's nose is pulled toward the direction of movement on the yaw axis")]
@@ -92,8 +94,6 @@ namespace SaccFlightAndVehicles
         [Tooltip("Damage taken Per G above maxGs, per second.\n(Gs - MaxGs) * GDamage = damage/second")]
         public float GDamage = 10f;
         [Header("Other:")]
-        [Tooltip("Adjusts all values that would need to be adjusted if you changed the mass automatically on Start(). Including all wheel colliders suspension values")]
-        public bool AutoAdjustValuesToMass = true;
         [Tooltip("Transform to base the pilot's throttle and joystick controls from. Used to make vertical throttle for helicopters, or if the cockpit of your vehicle can move, on transforming vehicle")]
         public Transform ControlsRoot;
         [Tooltip("Wind speed on each axis")]
@@ -386,6 +386,26 @@ namespace SaccFlightAndVehicles
             }
             get => PreventEngineToggle;
         }
+        [System.NonSerialized] public float InverThrustMultiplier = -1;
+        [System.NonSerializedAttribute] public bool _InvertThrust;
+        [System.NonSerializedAttribute, FieldChangeCallback(nameof(InvertThrust_))] public int InvertThrust = 0;
+        public int InvertThrust_
+        {
+            set
+            {
+                if (value > 0 && InvertThrust == 0)
+                {
+                    EntityControl.SendEventToExtensions("SFEXT_O_InvertThrust_Activated");
+                }
+                else if (value == 0 && InvertThrust > 0)
+                {
+                    EntityControl.SendEventToExtensions("SFEXT_O_InvertThrust_Deactivated");
+                }
+                _InvertThrust = value > 0;
+                InvertThrust = value;
+            }
+            get => InvertThrust;
+        }
         [System.NonSerializedAttribute] public Vector3 JoystickOverride;
         private float JoystickGrabValue;
         private float JoystickValueLastFrame;
@@ -417,7 +437,7 @@ namespace SaccFlightAndVehicles
             else
             {
                 InEditor = false;
-                InVR = localPlayer.IsUserInVR();
+                InVR = EntityControl.InVR;
                 if (localPlayer.isMaster)
                 {
                     IsOwner = true;
@@ -440,23 +460,14 @@ namespace SaccFlightAndVehicles
             WheelCollider[] wc = VehicleMesh.GetComponentsInChildren<WheelCollider>(true);
             if (wc.Length != 0) { HasWheelColliders = true; }
 
-            if (AutoAdjustValuesToMass)
+            //Adjust wheel values so you don't have to readjust them every time you change rigidbody mass
+            float RBMass = VehicleRigidbody.mass;
+            foreach (WheelCollider wheel in wc)
             {
-                //values that should feel the same no matter the weight of the aircraft
-                float RBMass = VehicleRigidbody.mass;
-                ThrottleStrength *= RBMass;
-                YawStrength *= RBMass;
-                YawFriction *= RBMass;
-                YawConstantFriction *= RBMass;
-                VelStraightenStrYaw *= RBMass;
-                VelLiftMax *= RBMass;
-                foreach (WheelCollider wheel in wc)
-                {
-                    JointSpring SusiSpring = wheel.suspensionSpring;
-                    SusiSpring.spring *= RBMass;
-                    SusiSpring.damper *= RBMass;
-                    wheel.suspensionSpring = SusiSpring;
-                }
+                JointSpring SusiSpring = wheel.suspensionSpring;
+                SusiSpring.spring *= RBMass;
+                SusiSpring.damper *= RBMass;
+                wheel.suspensionSpring = SusiSpring;
             }
             VehicleLayer = VehicleMesh.gameObject.layer;//get the layer of the vehicle as set by the world creator
             OutsideVehicleLayer = VehicleMesh.gameObject.layer;
@@ -785,13 +796,20 @@ namespace SaccFlightAndVehicles
                                 }
                             }
                         }
-                        //keyboard control for afterburner
-                        if (Input.GetKeyDown(AfterBurnerKey) && HasAfterburner)
+                        //keyboard control for afterburner                        //keyboard control for afterburner
+                        if (Input.GetKeyDown(AfterBurnerKey))
                         {
-                            if (AfterburnerOn)
-                                PlayerThrottle = ThrottleAfterburnerPoint;
+                            if (HasAfterburner)
+                            {
+                                if (PlayerThrottle == 1)
+                                { PlayerThrottle = ThrottleAfterburnerPoint; }
+                                else
+                                { PlayerThrottle = 1; }
+                            }
+                            else if (PlayerThrottle < 1)
+                            { PlayerThrottle = 1; }
                             else
-                                PlayerThrottle = 1;
+                            { PlayerThrottle = 0; }
                         }
                         if (ThrottleOverridden_ > 0 && !ThrottleGripLastFrame)
                         {
@@ -944,6 +962,10 @@ namespace SaccFlightAndVehicles
                     {
                         Yawing = (VehicleTransform.right * LerpedYaw);
                         Vector2 Outputs = UnpackThrottles(EngineOutput);
+                        if (_InvertThrust)
+                        {
+                            Outputs *= InverThrustMultiplier;
+                        }
                         Thrust = ThrustPoint.forward * (Mathf.Min(Outputs.x)//Throttle
                         * ThrottleStrength
                         + Mathf.Max(Outputs.y, 0)//Afterburner throttle
@@ -969,15 +991,16 @@ namespace SaccFlightAndVehicles
             if (IsOwner && !Asleep)
             {
                 float DeltaTime = Time.fixedDeltaTime;
+                float RBMass = VehicleRigidbody.mass;
                 //lerp velocity toward 0 to simulate air friction
                 Vector3 VehicleVel = VehicleRigidbody.velocity;
                 VehicleRigidbody.velocity = Vector3.Lerp(VehicleVel, FinalWind * StillWindMulti, ((((AirFriction) * ExtraDrag)) * 90) * DeltaTime);
                 //apply thrust
-                VehicleRigidbody.AddForceAtPosition(Thrust, ThrustPoint.position, ForceMode.Force);//deltatime is built into ForceMode.Force
-                                                                                                   //apply yawing using yaw moment
-                VehicleRigidbody.AddForceAtPosition(Yawing, YawMoment.position, ForceMode.Force);
+                VehicleRigidbody.AddForceAtPosition(Thrust * RBMass, ThrustPoint.position, ForceMode.Force);//deltatime is built into ForceMode.Force
+                                                                                                            //apply yawing using yaw moment
+                VehicleRigidbody.AddForceAtPosition(Yawing * RBMass, YawMoment.position, ForceMode.Force);
                 //calc Gs
-                float gravity = 9.80665f * DeltaTime;
+                float gravity = 9.81f * DeltaTime;
                 LastFrameVel.y -= gravity; //add gravity
                 AllGs = Vector3.Distance(LastFrameVel, VehicleVel) / gravity;
                 GDamageToTake += Mathf.Max((AllGs - MaxGs), 0);
@@ -1146,14 +1169,22 @@ namespace SaccFlightAndVehicles
                 VehicleTransform.GetChild(i).position -= CoMOffset;
             }
             VehicleTransform.position += CoMOffset;
-            SendCustomEventDelayedSeconds(nameof(SetCoM), Time.fixedDeltaTime);//this has to be delayed because ?
+            SendCustomEventDelayedSeconds(nameof(SetCoM_ITR), Time.fixedDeltaTime);//this has to be delayed because ?
             EntityControl.Spawnposition = VehicleTransform.localPosition;
             EntityControl.Spawnrotation = VehicleTransform.localRotation;
         }
-        public void SetCoM()
+        public void SetCoM_ITR()
         {
             VehicleRigidbody.centerOfMass = VehicleTransform.InverseTransformDirection(CenterOfMass.position - VehicleTransform.position);//correct position if scaled
+            EntityControl.CoMSet = true;
+            VehicleRigidbody.ResetInertiaTensor();
             VehicleRigidbody.inertiaTensorRotation = Quaternion.SlerpUnclamped(Quaternion.identity, VehicleRigidbody.inertiaTensorRotation, InertiaTensorRotationMulti);
+            if (InvertITRYaw)
+            {
+                Vector3 ITR = VehicleRigidbody.inertiaTensorRotation.eulerAngles;
+                ITR.x *= -1;
+                VehicleRigidbody.inertiaTensorRotation = Quaternion.Euler(ITR);
+            }
         }
         public void FuelEvents()
         {
@@ -1531,10 +1562,7 @@ namespace SaccFlightAndVehicles
         public void SFEXT_O_PilotEnter()
         {
             if (Asleep) { WakeUp(); }
-            if (!InEditor)
-            {
-                InVR = localPlayer.IsUserInVR();
-            }
+            InVR = EntityControl.InVR;
             GDHitRigidbody = null;
             if (_EngineOn)
             { PlayerThrottle = ThrottleInput = EngineOutputLastFrame = EngineOutput; }
