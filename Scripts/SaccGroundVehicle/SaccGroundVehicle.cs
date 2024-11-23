@@ -100,11 +100,8 @@ namespace SaccFlightAndVehicles
             get => HandBrakeOn;
         }
         private Vector3 VehiclePosLastFrame;
-        public bool Bike_AutoSteer;
-        public float Bike_AutoSteer_CounterStrength = .01f;
-        public float Bike_AutoSteer_Strength = .01f;
-        public bool Drift_AutoSteer;
         [Header("AutoSteer (Drift Mode)")]
+        public bool Drift_AutoSteer;
         [Tooltip("Put in the max degrees the wheels can turn to in order to make autosteer work properly")]
         public float SteeringDegrees = 60;
         public float AutoSteerStrength = 5f;
@@ -150,6 +147,10 @@ namespace SaccFlightAndVehicles
         [Tooltip("How far head has to move to lean forward/back, high number = less movement required")]
         public float LeanSensitivity_Pitch = 2.5f;
         public bool EnableLeaning = false;
+        public bool Bike_AutoSteer;
+        public float Bike_AutoSteer_CounterStrength = .01f;
+        public float Bike_AutoSteer_Strength = .01f;
+        [Space(10)]
         [Tooltip("Completely change how the vehicle operates to behave like a tank, enables two throttle sliders, and turns DriveWheels/SteerWheels into Left/Right tracks")]
         public bool TankMode;
         [Tooltip("Multiply how much the VR throttle moves from hand movement, TankMode only")]
@@ -157,7 +158,6 @@ namespace SaccFlightAndVehicles
         [Header("Debug")]
         [UdonSynced(UdonSyncMode.Linear)] public float Revs;
         public float Clutch;
-        [System.NonSerialized] public int OutsideVehicleLayer;
         public int CurrentGear = 0;
         private bool LimitingRev = false;
         public Vector3 VehicleVel;
@@ -281,7 +281,7 @@ namespace SaccFlightAndVehicles
             FullHealth = Health;
             FullFuel = Fuel;
 
-            OutsideVehicleLayer = VehicleMesh.gameObject.layer;//get the layer of the vehicle as set by the world creator
+            EntityControl.OutsideVehicleLayer = VehicleMesh.gameObject.layer;//get the layer of the vehicle as set by the world creator
 
             IsOwner = EntityControl.IsOwner;
             UpdateWheelIsOwner();
@@ -361,7 +361,7 @@ namespace SaccFlightAndVehicles
             Initialized = true;
             VehicleRigidbody = EntityControl.gameObject.GetComponent<Rigidbody>();
             VehicleTransform = EntityControl.transform;
-            OutsideVehicleLayer = VehicleMesh.gameObject.layer;//get the layer of the vehicle as set by the world creator
+            EntityControl.OutsideVehicleLayer = VehicleMesh.gameObject.layer;//get the layer of the vehicle as set by the world creator
         }
         private void Start()// awake function when
         {
@@ -1221,7 +1221,7 @@ namespace SaccFlightAndVehicles
             {
                 SteerWheels[i].SetProgramVariable("EngineRevs", 0f);//for TankMode
             }
-            SetCollidersLayer(OutsideVehicleLayer);
+            SetCollidersLayer(EntityControl.OutsideVehicleLayer);
             if (!EntityControl.MySeatIsExternal) { localPlayer.SetVelocity(CurrentVel); }
             SetWheelDriver();
         }
@@ -1234,7 +1234,7 @@ namespace SaccFlightAndVehicles
         {
             Passenger = false;
             if (!EntityControl.MySeatIsExternal) { localPlayer.SetVelocity(CurrentVel); }
-            SetCollidersLayer(OutsideVehicleLayer);
+            SetCollidersLayer(EntityControl.OutsideVehicleLayer);
         }
         public void SFEXT_G_PassengerEnter()
         {
