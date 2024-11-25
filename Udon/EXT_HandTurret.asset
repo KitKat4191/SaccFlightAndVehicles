@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: EXT_HandTurret
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 23970dfabda4da341b6ac76690d3286b,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 40b9685a8a41d2f46989c07780c6c7d8,
     type: 2}
   udonAssembly: 
   assemblyError: 
